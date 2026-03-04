@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI모델로 이미지 처리</title>
+</head>
+<body>
+<h1>AI모델 연동 및 이미지 처리</h1>
+<form method="post" id="fileUploadForm" enctype="multipart/form-data">
+    데이터 : <input type="text" name="message" value="test hello"><p></p>
+    파일  : <input type="file" name="file"><p></p>
+    <input type="button" value="비동기 요청"><!-- 자동서브밋 이 일어나지 않아야 함 -->
+</form>
+<div id="result" style="width: 900px; height: 700px;">여기에 요청 결과가 출력되어야 합니다.</div>
+<script>
+    // type="button"인 input 요소(업로드 버튼)를 선택
+    const button = document.querySelector("input[type=button]");
+
+    // 버튼 클릭 시 실행될 이벤트 등록
+    button.addEventListener("click", () => {
+
+        // 1) 업로드 폼 가져오기 (파일 input + message input 등 포함된 form)
+        const form = document.querySelector("#fileUploadForm");
+
+        // 2) FormData 생성
+        // - FormData(form)을 하면, 폼 안의 input 요소들이 자동으로 묶임
+        // - <input name="message">, <input type="file" name="file"> 같은 것들이 key-value로 들어감
+        // - 서버에서는 MultipartFile + String 파라미터로 받을 수 있음
+        const formData = new FormData(form);   <!-- form Data -->
+
+        // 3) 중복 클릭 방지: 요청 보내는 동안 버튼 비활성화
+        button.disabled = true; // 버튼이 비활성화 된다.
+
+        // 4) XMLHttpRequest 객체 생성 (옛날 방식이지만 원리 이해에 좋음)
+        const xhr = new XMLHttpRequest();
+
+        // 5) 요청 설정
+        // - POST 요청
+        // - "http://localhost:8080/yolo/javaService" 로 멀티파트 폼 데이터 전송
+        // - true: 비동기 요청(요청 보내고 응답은 콜백에서 처리)
+        xhr.open("POST", "http://localhost:8080/yolo/javaService", true);
+
+        // ❗중요 포인트:
+        // xhr.setRequestHeader("Content-Type", "multipart/form-data");
+        // 이 줄을 "직접" 넣으면 보통 문제가 생깁니다.
+        //
+        // 이유:
+        // - multipart/form-data는 boundary(경계 문자열)가 필수인데,
+        // - 브라우저가 FormData를 전송할 때 boundary를 자동으로 만들어 붙입니다.
+        // - 개발자가 Content-Type을 수동으로 지정하면 boundary가 빠져서
+        //   서버가 파일을 제대로 파싱하지 못할 수 있습니다.
+        // 그래서 주석 처리한 것이 맞는 선택입니다.
+
+        // 6) 서버 응답이 정상적으로 도착했을 때 실행되는 콜백
+        xhr.onload = function () {
+
+            // HTTP 상태코드가 200~299면 성공 처리
+            if (xhr.status >= 200 && xhr.status < 300) {
+
+                // 6-1) 서버 응답(xhr.responseText)은 문자열이므로 JSON으로 파싱
+                // 예: { "message": "...", "image": "BASE64문자열..." }
+                const response = JSON.parse(xhr.responseText);
+
+                // 6-2) 결과를 표시할 영역(div) 선택
+                const resultDiv = document.querySelector("#result");
+
+                // 6-3) 서버가 준 message를 출력
+                resultDiv.innerHTML = response.message + "<br>";
+
+                // 6-4) 서버가 준 base64 이미지를 브라우저에서 표시하기 위해 data URL로 변환
+                // data:image/png;base64, + (base64 문자열)
+                // ※ 서버가 png로 준다는 가정. jpg라면 image/jpeg로 바꿔야 함
+                const img_src = "data:image/png;base64," + response.image;
+
+                // 6-5) img 태그를 동적으로 생성해서 src에 data URL 넣기
+                const img = document.createElement("img");
+                img.src = img_src;
+
+                // 6-6) resultDiv에 이미지 추가(화면에 보여짐)
+                resultDiv.appendChild(img);
+
+                // 6-7) 성공했으니 버튼 다시 활성화
+                button.disabled = false;
+
+            } else {
+                // 상태코드가 200대가 아니면 실패 처리
+                console.error("Error: " + xhr.statusText);
+                alert("fail " + xhr.statusText);
+
+                // 실패해도 버튼은 다시 활성화해야 사용자가 재시도 가능
+                button.disabled = false;
+            }
+        };
+
+        // 7) 네트워크 오류(서버 다운, CORS 차단, 연결 실패 등) 발생 시 콜백
+        xhr.onerror = function () {
+            console.error("Error: " + xhr.statusText);
+            alert("fail " + xhr.statusText);
+            button.disabled = false;
+        };
+
+        // 8) 실제 요청 전송
+        // - formData 안에 파일 + message 같은 값이 들어있고
+        // - 브라우저가 자동으로 multipart/form-data + boundary 형태로 전송함
+        xhr.send(formData);
+    });
+</script>
+</body>
+</html>

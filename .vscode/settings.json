@@ -1,0 +1,18 @@
+{
+  //vsCode 폰트 설정 바꿈
+  //"editor.fontFamily": "'D2Coding'",
+  "editor.fontLigatures": true,
+  "editor.fontFamily": "DejaVu Sans Mono",
+  //"editor.fontFamily": "Ubuntu-Mono",
+  //"editor.fontFamily": "Malgun Gothic",
+  //"editor.fontFamily": "JetBrains Mono",
+  //"editor.fontFamily": "나눔스퀘어라운드 굵게",
+
+  "editor.fontSize": 22,
+  "files.autoSave": "afterDelay",
+  "editor.tabSize": 2,
+  "scm.compactFolders": false,
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "liveServer.settings.port": 5501,
+  "java.compile.nullAnalysis.mode": "automatic"
+}

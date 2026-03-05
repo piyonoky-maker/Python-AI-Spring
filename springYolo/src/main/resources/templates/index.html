@@ -57,6 +57,7 @@
             // HTTP 상태코드가 200~299면 성공 처리
             if (xhr.status >= 200 && xhr.status < 300) {
 
+
                 // 6-1) 서버 응답(xhr.responseText)은 문자열이므로 JSON으로 파싱
                 // 예: { "message": "...", "image": "BASE64문자열..." }
                 const response = JSON.parse(xhr.responseText);

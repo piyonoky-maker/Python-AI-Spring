@@ -34,6 +34,7 @@ target/
 build/
 out/
 .gradle/
+gradle/
 !.mvn/wrapper/maven-wrapper.jar
 
 ####################################################

@@ -18,10 +18,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequestMapping("/yolo")
 @RequiredArgsConstructor
 public class YoloController {
-    // 브라우저에서 파이썬 서버를 요청해야 하는데
-    // implementation 'org.springframework.boot:spring-boot-starter-webflux' 추가 할것
-    // 자바코드로 이것을 하려면 추가 API가 필요하다
-    private final WebClient webClient; // 불변객체
+    //브라우저에서 파이썬 서버를 요청해야 하는데
+    //implementation 'org.springframework.boot:spring-boot-starter-webflux' 추가할 것.
+    //자바코드로 이것을 하려면 추가API가 필요하다.
+    private final WebClient webClient;//불변객체
     /*****************************************************************************
      * 톰캣 서버의 템플릿 엔진으로 화면을 받아올 때
      * @param file
@@ -63,15 +63,32 @@ public class YoloController {
     }//end of javaService
     /*****************************************************************************
      * 리액트 서버의 Yolo.jsx로 부터 요청을 받았올 때
-     * @param file
-     * @param message
+     * @param file React가 업로드한 파일
+     * @param message React가 input으로 보낸 문자열
      * @return result
      *****************************************************************************/
     @PostMapping("/reactService")
     public ResponseEntity<String> reactService(MultipartFile file, String message) {
         log.info("reactService");
-        String result = "{'message':'test hello', 'base64이미지':''}";
+        //String result = "{'message':'test hello', 'base64이미지':''}";
         //파이썬 서버로 부터 받은 JSON문자열을 React 클라이언트 전달
+        //(1)python서버로 보낼 멀티파트(form-data)본문을 구성하는 빌더
+        MultipartBodyBuilder bodyBuilder = new  MultipartBodyBuilder();
+        //(2)form-data파트 추가 : message라는 이름의 파일 텍스트 파트
+        bodyBuilder.part("message", message);
+        //(3)form-data파트 추가 : file이라는 이름이 파일 파트
+        bodyBuilder.part("file", file.getResource());
+        //(4) WebClient로 python서버에 POST요청
+        //python서버 baseURL이 webclient에 미리 설정함.
+        //여기서는 /detect 엔드포인트로 보냄
+        String result = webClient.post()
+                .uri("/detect")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(result);
